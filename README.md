@@ -15,7 +15,7 @@ With Git installed, clone your fork, and configure the repository
 ```
 git clone https://github.com/<<YOUR USERNAME>>/project-papa
 cd project-papa
-git add remote upstream https://github.com/project-papa/project-papa
+git remote add upstream https://github.com/project-papa/project-papa
 ```
 
 You will be making changes to your local fork, pushing them, then opening pull requests against the canonical copy (upstream).
@@ -40,7 +40,7 @@ git checkout -b BRANCH_NAME
 Then, make changes to your code. Add the feature you plan to add. Please write new tests, and then run them to make sure nothing is broken
 
 ```
-./gradle test
+./gradlew test
 ```
 
 Then you want to commit your changes, and push them to your fork
