@@ -53,6 +53,16 @@ class server {
          */
         virtual void on_message(connection conn, message msg);
 
+        /**
+         * Event handler for a websocket closing.
+         * Can be overridden in subclasses to provide different behavior.
+         * @param conn connection handler of the socket that sent the message
+         * @param status status code (see RFC 6455 7.4.1)
+         * @param reason the reason for disconnection
+         */
+        virtual void on_close(connection conn, int status,
+            const std::string& reason);
+
         ws_server wss;
 
     private:

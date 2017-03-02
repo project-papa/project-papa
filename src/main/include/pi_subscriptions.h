@@ -89,8 +89,6 @@ class pi_subscriptions {
                     std::string json_string(buffer.GetString());
                     ws->broadcast_message(json_string);
 
-                    std::cout << json_string << "\n";
-
                     #ifdef _WIN32
                     Sleep(delay);
                     #else

@@ -8,7 +8,12 @@ target_link_libraries(server osc_interface)
 target_link_libraries(server websockets_interface)
 target_link_libraries(server scope_interface)
 
-target_link_libraries(server pthread)
+if(UNIX)
+    target_link_libraries(server pthread)
+    if(NOT APPLE)
+        target_link_libraries(server rt)
+    endif()
+endif()
 
 target_link_libraries(server ${Boost_LIBRARIES})
 target_link_libraries(server ${OPENSSL_LIBRARIES})

@@ -9,6 +9,12 @@ server::server(int port) {
     default_endpoint.on_message = [this] (connection conn, message msg) {
         this->on_message(conn, msg);
     };
+
+    default_endpoint.on_close =
+        [this] (
+            connection conn, int status, const std::string& reason) {
+        this->on_close(conn, status, reason);
+    };
 }
 
 server::~server() {
@@ -48,4 +54,9 @@ void server::on_message(connection conn, message msg) {
     auto send_stream = std::make_shared<ws_server::SendStream>();
     *send_stream << message_str;
     wss.send(conn, send_stream);
+}
+
+void server::on_close(
+    connection conn, int status, const std::string& reason) {
+    // do nothing - stub method
 }

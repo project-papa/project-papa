@@ -69,6 +69,12 @@ class pi_ws_server : public server {
             }
         }
 
+        void on_close(connection c, int s, const std::string& r) {
+            oscpkt::Message m("/stop-all-jobs");
+            m.pushStr(GUI_ID);
+            sender.send_osc(m);
+        }
+
         osc_sender sender;
         std::unique_ptr<pi_subscriptions> subs;
 };
