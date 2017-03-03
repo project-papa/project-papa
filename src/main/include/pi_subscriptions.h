@@ -34,8 +34,15 @@ class pi_subscriptions {
 
         void update_scopes(std::vector<unsigned int>& new_scopes) {
             scope_mutex.lock();
-            scopes = new_scopes;
+            _scopes = new_scopes;
             scope_mutex.unlock();
+        }
+
+        std::vector<unsigned int> get_scopes() {
+            scope_mutex.lock();
+            std::vector<unsigned int> scopes_copy = _scopes;
+            scope_mutex.unlock();
+            return scopes_copy;
         }
 
         void run() {
@@ -54,25 +61,33 @@ class pi_subscriptions {
                     Value a;
                     a.SetObject();
 
-                    scope_mutex.lock();
-
+                    std::vector<unsigned int> scopes = get_scopes();
                     if (scopes.size() == 0) {
-                        scope_mutex.unlock();
                         continue;
                     }
+
+                    bool has_members = false;
 
                     for (int i = 0; i < scopes.size(); i++) {
                         stereo_data data = reader->read_scope(scopes[i]);
 
-                        double acc = 0;
-                        if (data.size() > 0) {
-                            for (size_t j = 0; j < data[0].size(); j++) {
-                                acc += data[0][j] * data[0][j];
-                            }
-
-                            acc /= data[0].size();
-                            acc = sqrt(acc);
+                        if (data.size() == 0) {
+                            continue;
                         }
+                        else {
+                            has_members = true;
+                        }
+
+                        double acc = 0;
+                        size_t total = 0;
+                        for (size_t c = 0; c < data.size(); c++) {
+                            total += data[c].size();
+                            for (size_t j = 0; j < data[c].size(); j++) {
+                                acc += data[c][j] * data[c][j];
+                            }
+                        }
+                        acc /= total;
+                        acc = sqrt(acc);
 
                         Value num = Value(std::to_string(scopes[i]).c_str(), alloc);
                         a.AddMember(num, Value(acc).Move(), alloc);
@@ -80,14 +95,17 @@ class pi_subscriptions {
 
                     d.AddMember("data", a, alloc);
 
-                    scope_mutex.unlock();
+                    if (has_members) {
+                        StringBuffer buffer;
+                        Writer<StringBuffer> writer(buffer);
+                        d.Accept(writer);
 
-                    StringBuffer buffer;
-                    Writer<StringBuffer> writer(buffer);
-                    d.Accept(writer);
-
-                    std::string json_string(buffer.GetString());
-                    ws->broadcast_message(json_string);
+                        std::string json_string(buffer.GetString());
+                        ws->broadcast_message(json_string);
+                    }
+                    else if (++emptyFrames >= 10) {
+                        reader->reconnect(); 
+                    }
 
                     #ifdef _WIN32
                     Sleep(delay);
@@ -106,10 +124,12 @@ class pi_subscriptions {
         std::thread thread;
 
         std::unique_ptr<scope_reader> reader;
-        std::vector<unsigned int> scopes;
+        std::vector<unsigned int> _scopes;
         std::mutex scope_mutex;
 
         server* ws;
+
+        int emptyFrames = 0;
 };
 
 #endif
